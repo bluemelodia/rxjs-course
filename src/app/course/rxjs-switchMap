@@ -1,0 +1,33 @@
+import { interval, switchMap } from 'rxjs';
+import { take } from 'rxjs/operators';
+
+const eternalStream$ = interval(2000);
+
+const source$ = interval(1000)
+  .pipe(
+    take(1)
+  );
+
+source$
+  .subscribe((res) => {
+    console.log("I'm just a normal subscriber: ", res);
+  });
+
+eternalStream$
+  .subscribe((res) => {
+    // console.log("I'm subscribed to the eternal stream: ", res);
+  });
+
+eternalStream$
+  .pipe(
+    switchMap(() => {
+      return source$;
+    })
+  )
+  .subscribe((res) => {
+    /**
+    * Each time eternalStream$ emits, we re-subscribe to the inner Observable,
+    * that is why we see new values even though it's a take(1).
+    */
+    console.log("I'm a subscriber with a switchMap: ", res);
+  });
