@@ -13,7 +13,7 @@ import {
 	withLatestFrom,
 	concatAll, shareReplay, throttle
 } from 'rxjs/operators';
-import { merge, fromEvent, Observable, concat, interval } from 'rxjs';
+import { merge, fromEvent, Observable, concat, interval, forkJoin } from 'rxjs';
 import { Lesson } from '../model/lesson';
 import { createHttpObservable } from '../common/util';
 import { debug, RxJsLoggingLevel } from '../common/debug';
@@ -41,6 +41,18 @@ export class CourseComponent implements OnInit, AfterViewInit {
 	ngOnInit() {
 
 		this.courseId = this.route.snapshot.params['id'];
+
+		const course$ = createHttpObservable(`/api/courses/${this.courseId}`);
+		const lesson$ = this.loadLessons();
+
+		forkJoin(course$, lesson$)
+			.pipe(
+				tap(([course, lessons]) => {
+					console.log('===> course', course);
+					console.log('===> lessons', lessons);
+				})
+			)
+			.subscribe();
 
 		this.course$ = createHttpObservable(`api/courses/${this.courseId}`)
 			.pipe(
